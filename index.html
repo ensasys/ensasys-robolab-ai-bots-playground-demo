@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#9bbc0f" />
+<title>ROBO//LAB — Retro AI Robot Playground by Ensasys @ Ethan Htoon</title>
+<style>
+  :root{
+    --g0:#0f380f;--g1:#306230;--g2:#8bac0f;--g3:#9bbc0f;--ink:#0f200b;
+    --paper:#e8f5b3;--panel:#d6e89a;--line:#476b1b;--shadow:#233d10;
+    --lcd-dark:#19380f;--lcd-mid:#426b20;--lcd-light:#a9ce42;--warning:#f4d35e;
+    --pixel: 'Courier New', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box}
+  html{background:var(--g0)}
+  body{margin:0;background:var(--g0);color:var(--ink);font:14px/1.4 var(--pixel);letter-spacing:.02em}
+  button,input,textarea,select{font:inherit}
+  button{cursor:pointer}
+  button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--warning);outline-offset:2px}
+  .page{max-width:1600px;margin:0 auto;padding:16px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:14px;color:var(--paper);flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-mark{width:42px;height:42px;display:grid;place-items:center;background:var(--g3);border:3px solid var(--paper);box-shadow:4px 4px 0 var(--shadow);font-weight:900;font-size:23px;color:var(--g0);image-rendering:pixelated}
+  .brand h1{font-size:clamp(20px,3vw,30px);margin:0;line-height:1;font-weight:900;letter-spacing:.05em}
+  .brand p{margin:5px 0 0;color:#bad687;font-size:11px;letter-spacing:.12em}
+  .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .status-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid #799d32;background:#1a4317;color:#cde89b;padding:7px 9px;font-size:11px;white-space:nowrap}
+  .led{width:8px;height:8px;background:var(--g3);box-shadow:0 0 0 2px #426b20;display:inline-block}
+  .pixel-btn{border:2px solid var(--g0);box-shadow:3px 3px 0 var(--shadow);background:var(--g3);color:var(--g0);padding:9px 11px;text-transform:uppercase;font-weight:900;font-size:11px;letter-spacing:.04em;transition:transform .08s,box-shadow .08s}
+  .pixel-btn:hover{background:#b8d849}
+  .pixel-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+  .pixel-btn.dark{background:var(--g1);color:var(--paper);border-color:var(--paper);box-shadow:3px 3px 0 #152b0b}
+  .pixel-btn.light{background:var(--paper)}
+  .pixel-btn.small{padding:6px 8px;font-size:10px}
+  .pixel-btn.warn{background:var(--warning)}
+  .layout{display:grid;grid-template-columns:minmax(230px,285px) minmax(360px,1fr) minmax(230px,285px);gap:14px;align-items:stretch}
+  .panel{background:var(--panel);border:3px solid var(--paper);box-shadow:5px 5px 0 var(--shadow);min-width:0;display:flex;flex-direction:column}
+  .panel-head{background:var(--g1);color:var(--paper);padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:3px solid var(--g0)}
+  .panel-head h2{font-size:13px;margin:0;font-weight:900;letter-spacing:.08em}
+  .bot-label{font-size:10px;color:#c8e694}
+  .bot-dot{display:inline-block;width:8px;height:8px;margin-right:7px;background:var(--g3);border:1px solid var(--paper)}
+  .chat-log{height:350px;min-height:240px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:#cce38a;background-image:linear-gradient(transparent 95%,rgba(48,98,48,.06) 95%);background-size:100% 5px}
+  .msg{max-width:96%;padding:8px 9px;border:2px solid var(--g1);font-size:12px;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap}
+  .msg.robot{align-self:flex-start;background:#e6f5b1;box-shadow:3px 3px 0 #9bbc0f}
+  .msg.user{align-self:flex-end;background:var(--g1);color:var(--paper);border-color:var(--g0);box-shadow:3px 3px 0 #8bac0f}
+  .msg.system{align-self:center;max-width:100%;font-size:10px;color:#36551c;background:#b6d770;border-style:dashed;text-align:center}
+  .msg .stamp{display:block;font-size:9px;opacity:.7;margin-bottom:4px;text-transform:uppercase;letter-spacing:.09em}
+  .typing{display:inline-flex;gap:4px;align-items:center}.typing span{width:5px;height:5px;background:var(--g1);animation:blink .7s steps(2,end) infinite}.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+  @keyframes blink{50%{opacity:.2}}
+  .chat-form{padding:10px;border-top:2px solid var(--line);display:grid;gap:8px}
+  .chat-form textarea{width:100%;resize:vertical;min-height:70px;max-height:140px;background:#f0facb;border:2px solid var(--g1);color:var(--ink);padding:9px;font-size:12px;line-height:1.45}
+  .chat-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .chat-tools .hint{font-size:9px;color:#4d6b27}
+  .stage-panel{padding:0;background:var(--g1);color:var(--paper)}
+  .stage-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-bottom:2px solid #a3c34c;background:#284f1d}
+  .stage-head h2{margin:0;font-size:13px;letter-spacing:.1em}
+  .stage-head small{font-size:10px;color:#cce69b}
+  .stage-wrap{padding:12px;background:var(--g1)}
+  .screen-shell{background:#132c0d;padding:9px;border:3px solid #a8c951;box-shadow:inset 0 0 0 3px #0d2108,5px 5px 0 #1b4116}
+  .screen-label{display:flex;justify-content:space-between;gap:8px;color:#9bbc0f;font-size:9px;margin:0 0 7px;text-transform:uppercase}
+  canvas{width:100%;display:block;aspect-ratio:320/214;image-rendering:pixelated;background:#9bbc0f;border:2px solid #557d22;touch-action:manipulation}
+  .screen-footer{display:flex;justify-content:space-between;gap:7px;flex-wrap:wrap;font-size:9px;color:#a9c970;margin-top:7px}
+  .legend{display:flex;gap:12px;flex-wrap:wrap}.legend span{display:inline-flex;align-items:center;gap:5px}.legend i{width:7px;height:7px;display:inline-block;background:#9bbc0f;border:1px solid #d9efa1}.legend i.b{background:#d7ee94}.legend i.o{background:#74932c}
+  .action-strip{display:flex;gap:7px;padding:0 12px 12px;flex-wrap:wrap}
+  .metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 12px 12px}
+  .metric{border:2px solid #8bad3e;background:#1e4717;padding:8px;min-width:0}
+  .metric .k{font-size:9px;color:#a9ca6a;text-transform:uppercase}.metric .v{font-size:17px;font-weight:900;color:#e2f8a9;margin-top:3px}
+  .quick-panel{padding:12px;background:#c4dd7c;color:var(--ink);border-top:3px solid var(--paper)}
+  .quick-panel h3{font-size:11px;margin:0 0 9px;letter-spacing:.08em}
+  .quick-prompts{display:flex;flex-wrap:wrap;gap:6px}
+  .prompt-chip{background:#dff0ad;border:1px solid #5b7e24;color:#1f3b12;padding:6px 7px;font-size:10px;text-align:left}
+  .prompt-chip:hover{background:#f0facb}
+  .stage-note{font-size:10px;color:#e0f3a5;line-height:1.6;padding:10px 12px;border-top:1px dashed #719733}
+  .footer{margin:16px 2px 0;color:#a9c970;font-size:10px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .footer strong{color:#e0f5a7}
+  .overlay{position:fixed;inset:0;background:rgba(5,19,5,.8);z-index:20;display:none;align-items:center;justify-content:center;padding:16px}
+  .overlay.open{display:flex}
+  .dialog{width:min(740px,100%);max-height:90vh;overflow:auto;background:var(--panel);border:4px solid var(--paper);box-shadow:8px 8px 0 #050f04;color:var(--ink)}
+  .dialog-head{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--g1);color:var(--paper);padding:12px 14px;border-bottom:3px solid var(--g0)}
+  .dialog-head h2{font-size:15px;margin:0}.dialog-body{padding:15px;display:grid;gap:14px}
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.field input,.field select,.field textarea{width:100%;min-width:0;background:#f0facb;border:2px solid var(--g1);padding:9px;color:var(--ink);font-size:12px}.field textarea{min-height:60px}
+  .notice{border:2px dashed #58782a;background:#e5f4b1;padding:10px;font-size:11px;line-height:1.55}.notice strong{display:block;margin-bottom:4px}
+  .dialog-actions{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:0 15px 15px}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:11px}.checkline input{accent-color:var(--g1)}
+  .api-status{font-size:11px;color:#36581d;line-height:1.5}.api-status.error{color:#842f20}
+  .catalog-tools{display:flex;gap:8px;flex-wrap:wrap}.catalog-tools input,.catalog-tools select{background:#f0facb;border:2px solid var(--g1);padding:8px;color:var(--ink)}
+  .catalog-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .catalog-item{padding:8px;border:1px solid #78983a;background:#e5f4b1;min-width:0}
+  .catalog-item strong{font-size:10px;display:block;overflow-wrap:anywhere}.catalog-item small{font-size:9px;color:#46641f;display:block;margin-top:4px;line-height:1.4}
+  .kbd{border:1px solid #7f9d42;background:#ebf7bf;padding:1px 4px;font-size:9px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(max-width:1050px){.layout{grid-template-columns:minmax(220px,1fr) minmax(340px,1.5fr)}.stage-panel{grid-column:1/-1;grid-row:1}.chat-panel{min-width:0}.chat-log{height:260px}.stage-wrap{max-width:850px;margin:0 auto;width:100%}.metrics{max-width:850px;margin:0 auto;width:100%}}
+  @media(max-width:650px){.page{padding:10px}.layout{grid-template-columns:1fr}.stage-panel{grid-column:auto;grid-row:auto}.chat-log{height:235px;min-height:180px}.brand p{font-size:9px}.brand-mark{width:35px;height:35px}.header-actions{width:100%}.status-chip{flex:1}.field-grid,.catalog-list{grid-template-columns:1fr}.field.full{grid-column:auto}.metrics{gap:5px}.metric{padding:6px}.metric .v{font-size:15px}.screen-shell{padding:6px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">R//</div>
+      <div><h1>ROBO<span style="color:var(--g3)">//</span>LAB</h1><p>RETRO AI ROBOT PLAYGROUND · BUILD / PLAY / EXPERIMENT</p> by Ensasys @ Ethan Htoon </div>
+    </div>
+    <div class="header-actions">
+      <span class="status-chip"><i class="led" id="modeLed"></i><span id="modeLabel">LOCAL DEMO MODE</span></span>
+      <button class="pixel-btn dark" id="catalogOpen">⌘ COMMAND CATALOG</button>
+      <button class="pixel-btn" id="apiOpen">⚙ API SETUP</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel chat-panel" aria-labelledby="botATitle">
+      <div class="panel-head"><h2 id="botATitle"><span class="bot-dot"></span>BOT_01 / PICO</h2><span class="bot-label">GREEN UNIT</span></div>
+      <div class="chat-log" id="logA" aria-live="polite"></div>
+      <form class="chat-form" id="formA">
+        <label class="sr-only" for="inputA">Command for robot one</label>
+        <textarea id="inputA" placeholder="Tell Pico what to do…&#10;Try: Pick up the cube, then toss it toward Bot 02." required></textarea>
+        <div class="chat-tools"><span class="hint">ENTER = SEND · SHIFT+ENTER = NEW LINE</span><button class="pixel-btn small" type="submit">SEND ▶</button></div>
+      </form>
+    </section>
+
+    <section class="panel stage-panel" aria-labelledby="stageTitle">
+      <div class="stage-head"><div><h2 id="stageTitle">▣ SIMULATION SCREEN</h2><small>PIXEL WORLD v1.0 // 320 × 214</small></div><div style="font-size:10px" id="sceneState">SCENE: SANDBOX_01</div></div>
+      <div class="stage-wrap">
+        <div class="screen-shell">
+          <div class="screen-label"><span>ROBO-SYSTEM / GBL-08</span><span>● REC <span id="frameCounter">0000</span></span></div>
+          <canvas id="world" width="320" height="214" aria-label="Pixel-art sandbox showing two robots, movable objects, and structures"></canvas>
+          <div class="screen-footer"><span>▲ OBJECTS: <b id="objectCount">4</b></span><span>■ BUILDS: <b id="buildCount">0</b></span><span>◆ ENGINE: <b id="engineState">READY</b></span></div>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="k">COMMANDS</div><div class="v" id="commandCount">120+</div></div>
+        <div class="metric"><div class="k">ACTIONS RUN</div><div class="v" id="actionsRun">000</div></div>
+        <div class="metric"><div class="k">BUILD BLOCKS</div><div class="v" id="blockCount">000</div></div>
+      </div>
+      <div class="action-strip">
+        <button class="pixel-btn small" id="pauseBtn">Ⅱ PAUSE</button>
+        <button class="pixel-btn small" id="resetBtn">↺ RESET WORLD</button>
+        <button class="pixel-btn small dark" id="selectedBtn">CONTROL: BOT 01</button>
+        <button class="pixel-btn small" id="clearChatBtn">CLEAR CHATS</button>
+      </div>
+      <div class="quick-panel">
+        <h3>▶ QUICK PROMPTS — CLICK TO TRY</h3>
+        <div class="quick-prompts" id="quickPrompts">
+          <button class="prompt-chip" data-bot="A" data-prompt="Pick up the cube, then throw it toward Bot 02">Pick up + toss</button>
+          <button class="prompt-chip" data-bot="A" data-prompt="Hug each other">Hug each other</button>
+          <button class="prompt-chip" data-bot="B" data-prompt="Build a pyramid, then dance">Build a pyramid</button>
+          <button class="prompt-chip" data-bot="A" data-prompt="If Bot 02 is nearby then high-five otherwise wave">IF / ELSE high-five</button>
+          <button class="prompt-chip" data-bot="B" data-prompt="Both robots dance, then build a circle">Team routine</button>
+          <button class="prompt-chip" data-bot="A" data-prompt="Make a wall, tower, and stairs">Build set</button>
+        </div>
+      </div>
+      <div class="stage-note">TIP: You can click a spot on the screen to send the selected robot there. Commands can target either robot, objects, or the whole team. The local parser handles common tasks; connect an API for more flexible natural-language planning.</div>
+    </section>
+
+    <section class="panel chat-panel" aria-labelledby="botBTitle">
+      <div class="panel-head"><h2 id="botBTitle"><span class="bot-dot" style="background:#d2ed91"></span>BOT_02 / BYTE</h2><span class="bot-label">LIME UNIT</span></div>
+      <div class="chat-log" id="logB" aria-live="polite"></div>
+      <form class="chat-form" id="formB">
+        <label class="sr-only" for="inputB">Command for robot two</label>
+        <textarea id="inputB" placeholder="Give Byte a task…&#10;Try: Build a circle, then salute Pico." required></textarea>
+        <div class="chat-tools"><span class="hint">PROMPTS CAN CONTROL BOTH BOTS</span><button class="pixel-btn small" type="submit">SEND ▶</button></div>
+      </form>
+    </section>
+  </main>
+  <footer class="footer"><span><strong>ROBO//LAB</strong> · A tiny sandbox for big ideas.</span><span>ONE FILE · HTML + CSS + JS · NO LIBRARIES</span><span>API KEY IS KEPT IN MEMORY ONLY</span></footer>
+</div>
+
+<!-- API Settings -->
+<div class="overlay" id="apiOverlay" role="dialog" aria-modal="true" aria-labelledby="apiTitle">
+  <section class="dialog">
+    <div class="dialog-head"><h2 id="apiTitle">⚙ AI LINK / API CONFIGURATION</h2><button class="pixel-btn small light" data-close="apiOverlay">CLOSE ✕</button></div>
+    <div class="dialog-body">
+      <div class="notice"><strong>Bring your own API key</strong>This is a static browser page. Your key is used directly in your browser and is not written into this HTML file or saved by default. Avoid entering a key on a page hosted publicly if you do not trust the page. Provider quotas, free access, model IDs, and browser CORS support can change.</div>
+      <div class="field-grid">
+        <div class="field"><label for="providerPreset">Provider preset</label><select id="providerPreset"><option value="demo">Offline demo (no API)</option><option value="openrouter">OpenRouter · free-model router</option><option value="gemini">Google Gemini · compatible API</option><option value="groq">Groq · compatible API</option><option value="custom">Custom OpenAI-compatible API</option></select></div>
+        <div class="field"><label for="modelInput">Model ID</label><input id="modelInput" value="openrouter/free" placeholder="provider/model-id" autocomplete="off" /></div>
+        <div class="field full"><label for="endpointInput">Chat completions endpoint URL</label><input id="endpointInput" value="https://openrouter.ai/api/v1/chat/completions" placeholder="https://…/v1/chat/completions" autocomplete="url" /></div>
+        <div class="field full"><label for="keyInput">API key (optional in demo mode)</label><input id="keyInput" type="password" placeholder="Paste your key here — never included in the file" autocomplete="off" spellcheck="false" /></div>
+        <div class="field"><label for="temperatureInput">Temperature</label><input id="temperatureInput" type="number" min="0" max="1.5" step="0.1" value="0.2" /></div>
+        <div class="field"><label for="timeoutInput">Timeout (seconds)</label><input id="timeoutInput" type="number" min="5" max="120" step="5" value="35" /></div>
+      </div>
+      <label class="checkline"><input type="checkbox" id="rememberSettings" /> Remember endpoint/model settings on this device (API key is never saved)</label>
+      <div id="apiStatus" class="api-status">Offline demo is ready. Choose a provider and enter your own API key to enable AI planning.</div>
+    </div>
+    <div class="dialog-actions"><button class="pixel-btn dark" id="testApiBtn">TEST API ↗</button><div style="display:flex;gap:8px"><button class="pixel-btn" id="demoApiBtn">USE OFFLINE</button><button class="pixel-btn" id="saveApiBtn">APPLY SETTINGS ✓</button></div></div>
+  </section>
+</div>
+
+<!-- Command catalogue -->
+<div class="overlay" id="catalogOverlay" role="dialog" aria-modal="true" aria-labelledby="catalogTitle">
+  <section class="dialog">
+    <div class="dialog-head"><h2 id="catalogTitle">⌘ COMMAND CATALOG / <span id="catalogCount">130</span> FUNCTIONS</h2><button class="pixel-btn small light" data-close="catalogOverlay">CLOSE ✕</button></div>
+    <div class="dialog-body">
+      <div class="catalog-tools"><input id="catalogSearch" type="search" placeholder="Search commands…" aria-label="Search commands" /><select id="catalogCategory" aria-label="Filter category"><option value="all">All categories</option></select></div>
+      <div class="notice">Ask in natural language rather than typing function names. With an API connected, the planner can chain commands and use condition blocks such as <span class="kbd">if_near</span>, <span class="kbd">if_holding</span>, and <span class="kbd">repeat</span>.</div>
+      <div class="catalog-list" id="catalogList"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const rand = (min, max) => Math.random() * (max - min) + min;
+
+  // Every catalog command maps to a core behavior. Aliases deliberately make the planner flexible.
+  const GROUPS = [
+    {category:'Movement',core:'move',description:'Travel around the sandbox.',names:['move','walk','run','move_forward','move_backward','strafe_left','strafe_right','turn_left','turn_right','turn_around','rotate','jump','hop','sidestep','approach','retreat','follow','circle_target','orbit','patrol','wander','go_to','return_home','stop','freeze','resume']},
+    {category:'Expressions',core:'express',description:'Emote, signal, or react.',names:['wave','greet','bow','nod','shake_head','dance','spin','cheer','celebrate','sulk','salute','think','sleep','wake','blink','beep','whistle','say','ask','laugh','clap','pose','flex','shrug','look_at','scan','inspect','point','gesture']},
+    {category:'Social',core:'social',description:'Friendly gestures or cartoon play-fighting.',names:['high_five','handshake','hug','fist_bump','pat','comfort','team_up','sync_move','mirror','race','tag','dodge','block','punch','kick','spar','shield','celebrate_with']},
+    {category:'Objects',core:'objects',description:'Pick up, move, share, and organize items.',names:['pick_up','drop','throw','toss','catch','carry','place','stack','unstack','push','pull','roll','slide','rotate_object','flip','toss_to','pass_to','fetch','sort_objects','line_up_objects','arrange','clean_up','collect','deliver','hide','reveal','count_objects']},
+    {category:'Building',core:'build',description:'Build pixel-block shapes and structures.',names:['build_pyramid','build_wall','build_tower','build_stairs','build_bridge','build_house','build_circle','build_square','build_triangle','build_rectangle','build_hexagon','build_diamond','build_heart','build_star','build_cross','build_arch','build_fence','build_spiral','build_zigzag','build_line','build_cube','build_ring','build_dome','build_robot','build_shape','demolish','repair','decorate','paint','assemble','connect','detach','balance']},
+    {category:'Logic & conditions',core:'logic',description:'Branch, repeat, coordinate, and report.',names:['repeat','wait','if_near','if_far','if_holding','if_clear','if_blocked','if_partner_idle','if_partner_wave','if_item_count','when_heard','when_seen','sequence','parallel','random_action','choose_action','compare_distance','report_status','report_inventory','explain_plan','ask_partner','wait_for_partner']}
+  ];
+  const CATALOG = GROUPS.flatMap(g => g.names.map(name => ({name,category:g.category,core:g.core,description:g.description})));
+  const CATALOG_BY_NAME = Object.fromEntries(CATALOG.map(c => [c.name,c]));
+  const CAT_NAMES = [...new Set(CATALOG.map(c=>c.category))];
+
+  const state = {
+    api:{provider:'openrouter',endpoint:'https://openrouter.ai/api/v1/chat/completions',model:'openrouter/free',key:'',temperature:0.2,timeout:35,remember:false,enabled:false},
+    robots:{
+      A:{id:'A',name:'PICO',x:68,y:126,home:{x:68,y:126},dir:0,held:null,pose:'idle',mood:'ok',busy:false,freeze:false,color:'#306230',accent:'#0f380f',lastAction:'READY'},
+      B:{id:'B',name:'BYTE',x:252,y:126,home:{x:252,y:126},dir:180,held:null,pose:'idle',mood:'ok',busy:false,freeze:false,color:'#597b27',accent:'#19380f',lastAction:'READY'}
+    },
+    items:[
+      {id:'cube',type:'crate',name:'cube',x:132,y:145,color:'#426b20',heldBy:null,visible:true},
+      {id:'ball',type:'ball',name:'ball',x:177,y:147,color:'#0f380f',heldBy:null,visible:true},
+      {id:'star',type:'star',name:'star',x:151,y:79,color:'#74932c',heldBy:null,visible:true},
+      {id:'plank',type:'plank',name:'plank',x:201,y:153,color:'#597b27',heldBy:null,visible:true}
+    ],
+    structures:[],sparks:[],floatingTexts:[],logs:{A:[],B:[]},actionsRun:0,blocksBuilt:0,paused:false,busyCount:0,frame:0,selectedBot:'A',activePromises:0
+  };
+
+  const canvas = $('world'); const ctx = canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  const PALETTE={d:'#0f380f',m:'#306230',l:'#8bac0f',p:'#9bbc0f',paper:'#e8f5b3',mid:'#426b20',light:'#cde88a'};
+  let loopId=null;
+
+  function setStatus(text, busy=false){$('sceneState').textContent='SCENE: '+text.toUpperCase().replace(/[^A-Z0-9 _-]/g,'').slice(0,26);$('engineState').textContent=busy?'RUNNING':'READY';}
+  function appendMessage(bot, role, text){
+    const log=$('log'+bot); const div=document.createElement('div');div.className='msg '+role;
+    const stamp=document.createElement('span');stamp.className='stamp';stamp.textContent=(role==='user'?'YOU':role==='system'?'SYSTEM':state.robots[bot].name)+' // '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const body=document.createElement('div');body.textContent=text;
+    div.append(stamp,body);log.appendChild(div);log.scrollTop=log.scrollHeight;
+    state.logs[bot].push({role:role==='user'?'user':'assistant',content:text});
+    if(state.logs[bot].length>18) state.logs[bot]=state.logs[bot].slice(-18);
+  }
+  function appendTyping(bot){const log=$('log'+bot),div=document.createElement('div');div.className='msg robot';div.dataset.typing='yes';div.innerHTML='<span class="stamp">'+state.robots[bot].name+' // THINKING</span><span class="typing"><span></span><span></span><span></span></span>';log.appendChild(div);log.scrollTop=log.scrollHeight;return ()=>div.remove();}
+  function addSystemBoth(text){for(const bot of ['A','B']){const log=$('log'+bot),div=document.createElement('div');div.className='msg system';div.textContent=text;log.appendChild(div);log.scrollTop=log.scrollHeight;}}
+
+  // Drawing helpers: all geometry uses integers to preserve the handheld-console look.
+  function px(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+  function textPx(txt,x,y,color=PALETTE.d,size=7){ctx.fillStyle=color;ctx.font=`bold ${size}px monospace`;ctx.textAlign='center';ctx.fillText(txt,Math.round(x),Math.round(y));}
+  function drawWorld(){
+    state.frame++;
+    px(0,0,W,H,'#9bbc0f');
+    // Tile field with old-school scanlines and checker patches.
+    for(let y=0;y<H;y+=16){for(let x=0;x<W;x+=16){if(((x/16|0)+(y/16|0))%2===0)px(x,y,16,16,'rgba(48,98,48,.055)');}}
+    for(let x=7;x<W;x+=16)for(let y=7;y<H;y+=16)px(x,y,1,1,'rgba(15,56,15,.2)');
+    // Sandbox boundary / corner markers.
+    px(5,5,W-10,2,'#426b20');px(5,H-7,W-10,2,'#426b20');px(5,5,2,H-10,'#426b20');px(W-7,5,2,H-10,'#426b20');
+    textPx('BUILD ZONE',W/2,16,'#426b20',6);
+    // Structures are composed of actual block cells.
+    for(const structure of state.structures){if(structure.hidden)continue;for(const b of structure.blocks){drawBlock(b.x,b.y,b.color||structure.color||'#306230',b.size||9);}if(structure.label)textPx(structure.label.toUpperCase(),structure.cx,structure.cy+structure.labelY||structure.cy+25,'#426b20',6);}
+    for(const item of state.items){if(!item.visible||item.heldBy)continue;drawItem(item);}
+    for(const botId of ['A','B']){const bot=state.robots[botId];drawRobot(bot);}
+    for(const s of state.sparks){if(s.until>performance.now()){for(let i=0;i<4;i++){const a=i*Math.PI/2+s.phase;px(s.x+Math.cos(a)*s.r,s.y+Math.sin(a)*s.r,2,2,s.color);}}}
+    state.sparks=state.sparks.filter(s=>s.until>performance.now());
+    for(const f of state.floatingTexts){const remain=f.until-performance.now();if(remain>0){textPx(f.text,f.x,f.y-Math.max(0,20-remain/30),f.color,7);}}
+    state.floatingTexts=state.floatingTexts.filter(f=>f.until>performance.now());
+    $('frameCounter').textContent=String(state.frame%10000).padStart(4,'0');
+    $('objectCount').textContent=state.items.filter(i=>i.visible).length;
+    $('buildCount').textContent=state.structures.filter(s=>!s.hidden).length;
+    $('actionsRun').textContent=String(state.actionsRun).padStart(3,'0');
+    $('blockCount').textContent=String(state.blocksBuilt).padStart(3,'0');
+    $('selectedBtn').textContent='CONTROL: BOT '+(state.selectedBot==='A'?'01':'02');
+    loopId=requestAnimationFrame(drawWorld);
+  }
+  function drawBlock(x,y,color,size=9){x=Math.round(x);y=Math.round(y);px(x-size/2,y-size/2,size,size,color);px(x-size/2,y-size/2,size,2,'#a9ce42');px(x-size/2,y-size/2,2,size,'#8bac0f');px(x+size/2-2,y-size/2,2,size,'#19380f');px(x-size/2,y+size/2-2,size,2,'#19380f');px(x-1,y-1,2,2,'#d4ed83');}
+  function drawItem(item){const x=Math.round(item.x),y=Math.round(item.y);if(item.type==='ball'){
+      px(x-5,y-5,10,10,item.color);px(x-3,y-7,6,2,'#d2e88b');px(x-3,y+5,6,2,'#19380f');px(x-7,y-3,2,6,'#19380f');px(x+5,y-3,2,6,'#19380f');px(x-2,y-2,2,2,'#e5f6ad');
+    }else if(item.type==='star'){
+      const points=[[0,-7],[2,-2],[7,-2],[3,1],[5,6],[0,3],[-5,6],[-3,1],[-7,-2],[-2,-2]];polygon(points.map(([a,b])=>[x+a,y+b]),item.color,'#426b20');px(x-1,y-2,2,2,'#e7f5b0');
+    }else if(item.type==='plank'){px(x-8,y-3,16,6,item.color);px(x-8,y-3,16,2,'#b8d849');px(x-6,y,2,2,'#0f380f');px(x+3,y,2,2,'#0f380f');
+    }else drawBlock(x,y,item.color,11);
+    textPx(item.name.toUpperCase(),x,y+13,'#426b20',5);
+  }
+  function polygon(points,fill,stroke){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
+  function drawRobot(bot){
+    const x=Math.round(bot.x),y=Math.round(bot.y);const bob=bot.pose==='jump'? -6:((bot.pose==='dance'||bot.pose==='cheer')?Math.round(Math.sin(state.frame/3)*2):0);const yy=y+bob;
+    // Shadow
+    px(x-10,y+8,20,3,'rgba(15,56,15,.25)');
+    const body=bot.id==='A'?'#306230':'#597b27'; const light=bot.id==='A'?'#8bac0f':'#b3d755';const dark='#0f380f';
+    // Side arms change for interaction poses.
+    let armL=-8,armR=8,armY=yy+1;
+    if(['hug','high_five','handshake','fist_bump','punch','kick','wave','salute'].includes(bot.pose)){armL=-12;armR=12;armY=yy-1;}
+    if(bot.pose==='wave')armR=14;if(bot.pose==='punch')armR=16;
+    px(x+armL-2,armY,5,4,dark);px(x+armR-3,armY,5,4,dark);
+    // Feet / tracks
+    px(x-7,yy+5,6,5,dark);px(x+1,yy+5,6,5,dark);px(x-8,yy+8,7,2,light);px(x+1,yy+8,7,2,light);
+    // Main chassis
+    px(x-10,yy-7,20,14,dark);px(x-8,yy-8,16,14,body);px(x-7,yy-8,14,3,light);px(x-8,yy+4,16,2,dark);
+    // Face panel / eyes
+    px(x-6,yy-3,12,6,'#d6e89a');
+    if(bot.mood==='sleep'){px(x-4,yy-1,3,1,dark);px(x+2,yy-1,3,1,dark);}else{px(x-4,yy-2,2,3,dark);px(x+2,yy-2,2,3,dark);}
+    if(bot.mood==='happy'||bot.pose==='cheer'||bot.pose==='hug'){px(x-2,yy+2,4,1,dark);}else px(x-1,yy+2,3,1,dark);
+    // Antenna
+    px(x-1,yy-12,2,5,dark);px(x-3,yy-14,6,3,light);px(x-2,yy-13,2,1,'#efffc2');
+    // Small direction indicator
+    const dx=Math.round(Math.cos(bot.dir*Math.PI/180)*4),dy=Math.round(Math.sin(bot.dir*Math.PI/180)*4);px(x+dx-1,yy-11+dy,3,2,dark);
+    // Held item
+    if(bot.held){const item=state.items.find(i=>i.id===bot.held);if(item){drawBlock(x+12,yy-2,item.color,8);}}
+    if(bot.pose==='hug'||bot.pose==='cheer')drawHeart(x,yy-20);
+    if(bot.pose==='think')textPx('?',x+10,yy-14,'#0f380f',10);
+    if(bot.pose==='sleep')textPx('zZ',x+13,yy-14,'#426b20',7);
+    if(bot.busy)px(x-2,yy-17,4,2,'#d0e986');
+    textPx(bot.id==='A'?'PICO':'BYTE',x,y+24,'#19380f',6);
+  }
+  function drawHeart(x,y){px(x-4,y,3,3,'#426b20');px(x+1,y,3,3,'#426b20');px(x-6,y+2,13,3,'#426b20');px(x-4,y+5,9,2,'#426b20');px(x-2,y+7,5,2,'#426b20');}
+  function puff(x,y,color='#d9f19a'){state.sparks.push({x,y,r:rand(3,7),phase:rand(0,5),color,until:performance.now()+500});}
+  function floatText(text,x,y,color='#0f380f'){state.floatingTexts.push({text:String(text).slice(0,26),x,y,color,until:performance.now()+1100});}
+
+  function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+  function otherBot(id){return state.robots[id==='A'?'B':'A'];}
+  function closestItem(bot,query=''){
+    const q=String(query||'').toLowerCase();const visible=state.items.filter(i=>i.visible&&!i.heldBy&&(!q||q==='item'||q==='object'||q==='anything'||i.name.includes(q)||i.type.includes(q)||q.includes(i.name)|| (q==='block'&&i.type==='crate')));
+    return visible.sort((a,b)=>distance(bot,a)-distance(bot,b))[0]||null;
+  }
+  function getItemById(id){return state.items.find(i=>i.id===id);}
+  function walkTo(bot,x,y,duration=480){
+    x=clamp(x,16,W-16);y=clamp(y,28,H-20);const startX=bot.x,startY=bot.y;const d=Math.hypot(x-startX,y-startY);const ms=clamp(duration+d*2,260,1100);const started=performance.now();bot.pose='walk';bot.busy=true;
+    return new Promise(resolve=>{function step(now){if(state.paused){requestAnimationFrame(step);return;}const t=clamp((now-started)/ms,0,1);const eased=t*t*(3-2*t);bot.x=startX+(x-startX)*eased;bot.y=startY+(y-startY)*eased;bot.dir=Math.atan2(y-startY,x-startX)*180/Math.PI;if(t<1)requestAnimationFrame(step);else{bot.busy=false;bot.pose='idle';resolve();}}requestAnimationFrame(step);});
+  }
+  async function faceTarget(bot,target){if(!target)return;bot.dir=Math.atan2(target.y-bot.y,target.x-bot.x)*180/Math.PI;await sleep(100);}
+  async function animatePose(bot,pose,ms=600,mood=null){const prev=bot.pose;bot.pose=pose;if(mood)bot.mood=mood;bot.busy=true;await sleep(ms);bot.busy=false;bot.pose='idle';if(pose==='sleep')bot.mood='sleep';else if(pose==='wake')bot.mood='ok';else bot.mood='ok';return prev;}
+  async function tweenItem(item,x,y,ms=400){const sx=item.x,sy=item.y,start=performance.now();return new Promise(resolve=>{function step(now){if(state.paused){requestAnimationFrame(step);return;}const t=clamp((now-start)/ms,0,1);item.x=sx+(x-sx)*t;item.y=sy+(y-sy)*t;if(t<1)requestAnimationFrame(step);else resolve();}requestAnimationFrame(step);});}
+  async function moveBotRelative(bot,dir,amount=28){const rad=bot.dir*Math.PI/180;let dx=Math.cos(rad),dy=Math.sin(rad);if(dir==='backward'||dir==='back') {dx=-dx;dy=-dy;}else if(dir==='left'){[dx,dy]=[-dy,dx];}else if(dir==='right'){[dx,dy]=[dy,-dx];}else if(dir==='north'){dx=0;dy=-1;}else if(dir==='south'){dx=0;dy=1;}else if(dir==='east'){dx=1;dy=0;}else if(dir==='west'){dx=-1;dy=0;}await walkTo(bot,bot.x+dx*amount,bot.y+dy*amount,300);}
+  function makeBlocks(shape,cx,cy,size=1){
+    const step=10,blocks=[];const add=(gx,gy)=>{const x=Math.round(cx+gx*step),y=Math.round(cy+gy*step);if(x>14&&x<W-14&&y>24&&y<H-14&&!blocks.some(b=>b.x===x&&b.y===y))blocks.push({x,y,size:9,color:['#306230','#426b20','#597b27','#74932c'][Math.abs(gx*3+gy*5)%4]});};
+    const line=(x1,y1,x2,y2)=>{let n=Math.max(Math.abs(x2-x1),Math.abs(y2-y1),1);for(let i=0;i<=n;i++)add(Math.round(x1+(x2-x1)*i/n),Math.round(y1+(y2-y1)*i/n));};
+    switch(shape){
+      case 'pyramid':for(let row=0;row<4*size;row++){const half=3*size-row;for(let x=-half;x<=half;x++)add(x,row-1);}break;
+      case 'circle':case 'ring':case 'dome':{const r=3*size;for(let a=0;a<360;a+=12){const rr=shape==='dome'?r*Math.sin(a*Math.PI/360):r;add(Math.round(Math.cos(a*Math.PI/180)*rr),Math.round(Math.sin(a*Math.PI/180)*rr));}if(shape==='dome')line(-r,0,r,0);break;}
+      case 'square':case 'cube':{const r=3*size;line(-r,-r,r,-r);line(-r,r,r,r);line(-r,-r,-r,r);line(r,-r,r,r);if(shape==='cube'){line(-r-1,-r-1,0,-r-2);line(r,-r,0,-r-2);line(0,-r-2,0,r-1);}break;}
+      case 'triangle':case 'build_triangle':{const r=3*size;line(0,-r,-r,r);line(0,-r,r,r);line(-r,r,r,r);break;}
+      case 'rectangle':case 'wall':case 'fence':{const rx=shape==='wall'?4*size:3*size,ry=shape==='wall'?1*size:2*size;line(-rx,-ry,rx,-ry);line(-rx,ry,rx,ry);line(-rx,-ry,-rx,ry);line(rx,-ry,rx,ry);break;}
+      case 'hexagon':case 'diamond':{const pts=shape==='hexagon'?[[ -2,-3],[2,-3],[4,0],[2,3],[-2,3],[-4,0]]:[[0,-4],[3,0],[0,4],[-3,0]];for(let i=0;i<pts.length;i++)line(pts[i][0]*size,pts[i][1]*size,pts[(i+1)%pts.length][0]*size,pts[(i+1)%pts.length][1]*size);break;}
+      case 'star':{const pts=[];for(let i=0;i<10;i++){const r=(i%2?1.5:4)*size,a=(-90+i*36)*Math.PI/180;pts.push([Math.round(Math.cos(a)*r),Math.round(Math.sin(a)*r)]);}for(let i=0;i<pts.length;i++)line(pts[i][0],pts[i][1],pts[(i+1)%pts.length][0],pts[(i+1)%pts.length][1]);break;}
+      case 'cross':{for(let v=-3*size;v<=3*size;v++) {add(0,v);add(v,0);}break;}
+      case 'arch':{line(-4*size,3*size,-4*size,0);line(4*size,3*size,4*size,0);for(let a=180;a<=360;a+=15)add(Math.round(Math.cos(a*Math.PI/180)*4*size),Math.round(Math.sin(a*Math.PI/180)*3*size));break;}
+      case 'stairs':{for(let i=0;i<5*size;i++)for(let j=0;j<=i;j++)add(i-2*size,2*size-j);break;}
+      case 'bridge':{line(-4*size,0,4*size,0);line(-4*size,1,4*size,1);line(-4*size,0,-4*size,-2*size);line(4*size,0,4*size,-2*size);break;}
+      case 'house':{line(-3,-1,3,-1);line(-3,3,3,3);line(-3,-1,-3,3);line(3,-1,3,3);line(-4,-1,0,-4);line(0,-4,4,-1);line(0,1,0,3);break;}
+      case 'heart':{const pts=[];for(let a=0;a<360;a+=20){const t=a*Math.PI/180;const x=16*Math.pow(Math.sin(t),3)/4;const y=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))/4;pts.push([Math.round(x*size*.8),Math.round(y*size*.8)]);}for(let i=0;i<pts.length;i++)line(pts[i][0],pts[i][1],pts[(i+1)%pts.length][0],pts[(i+1)%pts.length][1]);break;}
+      case 'spiral':{for(let a=0;a<720;a+=25){const r=.02*a*size/2;add(Math.round(Math.cos(a*Math.PI/180)*r),Math.round(Math.sin(a*Math.PI/180)*r));}break;}
+      case 'zigzag':{for(let i=0;i<7*size;i++)add(i-3*size,(i%2?2:-2));break;}
+      case 'line':{line(-4*size,0,4*size,0);break;}
+      case 'tower':{for(let y=-4*size;y<=3*size;y++)for(let x=-1;x<=1;x++)if(y%2===0||x!==0)add(x,y);break;}
+      case 'pyramid_stack':for(let row=0;row<4;row++)for(let x=-row;x<=row;x++)add(x,3-row);break;
+      case 'robot':{for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++)add(x,y);add(-2,-3);add(2,-3);add(-1,-4);add(1,-4);break;}
+      default:{const r=3*size;line(-r,-r,r,-r);line(-r,r,r,r);line(-r,-r,-r,r);line(r,-r,r,r);}
+    }
+    return blocks;
+  }
+  async function buildShape(bot,shape,args={}){
+    shape=String(shape||'pyramid').toLowerCase().replace(/^build_/,'');if(shape==='circle'){};
+    const offset=bot.id==='A'?32:-32;const cx=clamp(bot.x+offset,46,W-46),cy=clamp(bot.y+15,54,H-48);const scale=clamp(Number(args.size)||1,1,1.4);const blocks=makeBlocks(shape,cx,cy,scale).slice(0,90);
+    const structure={id:'s'+Date.now()+Math.random().toString(16).slice(2,6),shape,cx,cy,blocks,color:'#306230',label:shape,labelY:24,hidden:false};state.structures.push(structure);state.blocksBuilt+=blocks.length;bot.pose='build';bot.busy=true;floatText('BUILD!',bot.x,bot.y-18);
+    for(let i=0;i<Math.min(blocks.length,16);i++){puff(blocks[i].x,blocks[i].y,'#d8ef91');await sleep(28);}
+    bot.pose='idle';bot.busy=false;return `Built a ${shape} from ${blocks.length} pixel blocks.`;
+  }
+
+  const CORE_CONDITIONS=new Set(['if_near','if_far','if_holding','if_clear','if_blocked','if_partner_idle','if_partner_wave','if_item_count','when_heard','when_seen']);
+  async function executeAction(action,depth=0){
+    if(depth>5)throw new Error('Nested command limit reached.');if(!action||typeof action!=='object')return;
+    const fn=String(action.fn||action.function||action.name||'').toLowerCase().replace(/[ -]/g,'_');const spec=CATALOG_BY_NAME[fn];if(!spec){appendMessage(action.bot==='B'?'B':'A','system',`Skipped unknown command: ${fn||'(empty)'}`);return;}
+    const rawBot=String(action.bot||state.selectedBot||'A').toUpperCase();const isBoth=rawBot==='BOTH'||rawBot==='TEAM'||rawBot==='ALL';const botIds=isBoth?['A','B']:[rawBot==='B'?'B':'A'];const args=action.args&&typeof action.args==='object'?action.args:{};
+    if(spec.core==='logic'&&CORE_CONDITIONS.has(fn)){
+      const b=state.robots[botIds[0]],partner=otherBot(b.id);let ok=false;const target=args.target==='A'?state.robots.A:args.target==='B'?state.robots.B:partner;
+      if(fn==='if_near')ok=distance(b,target)<=Number(args.distance||48);
+      if(fn==='if_far')ok=distance(b,target)>Number(args.distance||48);
+      if(fn==='if_holding')ok=!!b.held&&(!args.item||String(getItemById(b.held)?.name||'').includes(String(args.item).toLowerCase()));
+      if(fn==='if_clear')ok=!closestItem(b,args.item||'');
+      if(fn==='if_blocked')ok=distance(b,target)<Number(args.distance||15);
+      if(fn==='if_partner_idle')ok=!partner.busy;
+      if(fn==='if_partner_wave')ok=partner.pose==='wave';
+      if(fn==='if_item_count')ok=state.items.filter(i=>i.visible).length>=Number(args.count||1);
+      if(fn==='when_heard')ok=String(window.__lastPrompt||'').toLowerCase().includes(String(args.phrase||''));
+      if(fn==='when_seen')ok=!!closestItem(b,args.item||'');
+      const branch=ok?(args.then||args.actions||[]):(args.else||[]);if(Array.isArray(branch))for(const child of branch)await executeAction({...child,bot:child.bot||botIds[0]},depth+1);
+      floatText(ok?'TRUE':'FALSE',b.x,b.y-18,ok?'#0f380f':'#426b20');return;
+    }
+    if(fn==='repeat'){const times=clamp(Number(args.times)||2,1,6),steps=args.actions||args.then||[];for(let n=0;n<times;n++)for(const child of steps)await executeAction({...child,bot:child.bot||botIds[0]},depth+1);return;}
+    if(fn==='sequence'){for(const child of args.actions||[])await executeAction({...child,bot:child.bot||botIds[0]},depth+1);return;}
+    if(fn==='parallel'){await Promise.all((args.actions||[]).map(child=>executeAction({...child,bot:child.bot||botIds[0]},depth+1)));return;}
+    if(fn==='wait'){await sleep(clamp(Number(args.ms)||500,0,10000));return;}
+    for(const id of botIds){const bot=state.robots[id];state.actionsRun++;bot.lastAction=fn.toUpperCase();setStatus(fn,true);let result='';
+      const paired=['high_five','handshake','hug','fist_bump','pat','comfort','celebrate_with','punch','kick','spar','tag','team_up','sync_move','mirror','race','throw','toss','toss_to','pass_to'];
+      const runArgs=isBoth&&paired.includes(fn)?{...args,target:otherBot(id).id}:args;
+      if(spec.core==='move') result=await doMove(fn,bot,runArgs);
+      else if(spec.core==='express') result=await doExpress(fn,bot,runArgs);
+      else if(spec.core==='social') result=await doSocial(fn,bot,runArgs);
+      else if(spec.core==='objects') result=await doObjects(fn,bot,runArgs);
+      else if(spec.core==='build') result=await doBuild(fn,bot,runArgs);
+      else if(spec.core==='logic') result=await doLogic(fn,bot,runArgs);
+      if(result && args.report!==false && !['report_status','report_inventory','explain_plan'].includes(fn)) { /* report is returned to caller */ }
+    }
+  }
+  async function doMove(fn,bot,args){
+    const amount=clamp(Number(args.distance||args.steps)|| (fn==='run'?48:fn==='sidestep'?18:28),4,100);
+    if(fn==='stop'||fn==='freeze'){bot.freeze=true;bot.pose='idle';return 'Stopped.';}
+    if(fn==='resume'){bot.freeze=false;return 'Movement resumed.';}
+    if(bot.freeze&&fn!=='resume'){return `${bot.name} is paused. Say “resume” first.`;}
+    if(fn==='turn_left'){bot.dir=(bot.dir-90+360)%360;await animatePose(bot,'turn',250);return 'Turned left.';}
+    if(fn==='turn_right'){bot.dir=(bot.dir+90)%360;await animatePose(bot,'turn',250);return 'Turned right.';}
+    if(fn==='turn_around'){bot.dir=(bot.dir+180)%360;await animatePose(bot,'turn',300);return 'Turned around.';}
+    if(fn==='rotate'){bot.dir=(bot.dir+Number(args.degrees||args.angle||90))%360;await animatePose(bot,'turn',350);return 'Rotated.';}
+    if(fn==='jump'||fn==='hop'){await animatePose(bot,'jump',500,'happy');return 'Boing!';}
+    if(fn==='approach'||fn==='follow'||fn==='go_to'){
+      const targetId=String(args.target||'partner').toUpperCase();let target=targetId==='A'?state.robots.A:targetId==='B'?state.robots.B:targetId==='HOME'?bot.home:otherBot(bot.id);
+      const item=closestItem(bot,String(args.item||''));if(args.item&&item)target=item;
+      const d=Number(args.distance)||22;const angle=Math.atan2(bot.y-target.y,bot.x-target.x);return await walkTo(bot,target.x+Math.cos(angle)*d,target.y+Math.sin(angle)*d,500).then(()=>`Moved toward ${target.name||target.name||'target'}.`);
+    }
+    if(fn==='retreat'){const t=otherBot(bot.id),a=Math.atan2(bot.y-t.y,bot.x-t.x);await walkTo(bot,bot.x+Math.cos(a)*amount,bot.y+Math.sin(a)*amount,430);return 'Retreated from partner.';}
+    if(fn==='circle_target'||fn==='orbit'){const t=otherBot(bot.id),r=Number(args.radius)||38;for(let i=1;i<=8;i++){const a=(Math.atan2(bot.y-t.y,bot.x-t.x)+Math.PI/4);await walkTo(bot,t.x+Math.cos(a+i*Math.PI/4)*r,t.y+Math.sin(a+i*Math.PI/4)*r,190);}return 'Completed an orbit.';}
+    if(fn==='patrol'||fn==='wander'){for(let i=0;i<3;i++)await walkTo(bot,rand(35,W-35),rand(40,H-30),280);return 'Patrol complete.';}
+    if(fn==='return_home'){await walkTo(bot,bot.home.x,bot.home.y,500);return 'Returned to home position.';}
+    let dir=args.direction||'forward';if(fn==='move_backward')dir='backward';if(fn==='strafe_left')dir='left';if(fn==='strafe_right')dir='right';
+    await moveBotRelative(bot,dir,amount);return `Moved ${dir}.`;
+  }
+  async function doExpress(fn,bot,args){
+    if(fn==='say'||fn==='ask'){const text=String(args.text||args.message||(fn==='ask'?'What should we build?':'Beep boop!')).slice(0,100);floatText(text,bot.x,bot.y-20,'#0f380f');return text;}
+    if(fn==='scan'||fn==='look_at'||fn==='inspect'||fn==='point'||fn==='gesture'){await faceTarget(bot,otherBot(bot.id));await animatePose(bot,'think',450);if(fn==='inspect')return `I can see ${state.items.filter(i=>i.visible).length} visible objects and ${state.structures.filter(s=>!s.hidden).length} builds.`;return `${fn.replace('_',' ')} complete.`;}
+    const poses={wave:'wave',greet:'wave',bow:'bow',nod:'nod',shake_head:'shake',dance:'dance',spin:'spin',cheer:'cheer',celebrate:'cheer',sulk:'sulk',salute:'salute',think:'think',sleep:'sleep',wake:'wake',blink:'blink',beep:'beep',whistle:'beep',laugh:'laugh',clap:'clap',pose:'pose',flex:'flex',shrug:'shrug'};
+    const pose=poses[fn]||'idle';if(fn==='spin'){bot.dir=(bot.dir+360*3)%360;for(let i=0;i<4;i++){bot.dir=(bot.dir+90)%360;await animatePose(bot,'spin',110);}}else await animatePose(bot,pose,fn==='dance'?1000:fn==='sleep'?900:500,fn==='cheer'||fn==='celebrate'||fn==='greet'?'happy':null);
+    if(fn==='beep'||fn==='whistle')puff(bot.x,bot.y-16,'#dff3a5');return `${fn.replaceAll('_',' ')}!`;
+  }
+  async function doSocial(fn,bot,args){
+    const target=args.target==='A'?state.robots.A:args.target==='B'?state.robots.B:otherBot(bot.id);
+    if(fn==='team_up'||fn==='celebrate_with'||fn==='sync_move'||fn==='mirror'){
+      if(fn==='sync_move'){await Promise.all([moveBotRelative(bot,args.direction||'forward',24),moveBotRelative(target,args.direction||'forward',24)]);return 'Moved in sync.';}
+      const pose=fn==='team_up'?'handshake':fn==='mirror'?'pose':'cheer';await Promise.all([animatePose(bot,pose,700,'happy'),animatePose(target,pose,700,'happy')]);return 'Team action complete.';
+    }
+    if(fn==='race'){const destA=bot.id==='A'?W-38:36,destB=target.id==='B'?W-38:36;await Promise.all([walkTo(bot,destA,bot.y,700),walkTo(target,destB,target.y,700)]);return 'Race complete!';}
+    if(fn==='tag'){await walkTo(bot,target.x-16,target.y+5,350);puff(target.x,target.y,'#dff3a5');return 'Tag — your turn!';}
+    if(fn==='dodge'){await moveBotRelative(bot,Math.random()<.5?'left':'right',25);return 'Dodged!';}
+    if(fn==='shield'||fn==='block'){await animatePose(bot,'block',500);return 'Shield up — cartoon-safe mode.';}
+    if(fn==='punch'||fn==='kick'||fn==='spar'){
+      await faceTarget(bot,target);bot.pose=fn;bot.busy=true;await sleep(220);puff((bot.x+target.x)/2,(bot.y+target.y)/2,'#dff3a5');target.mood='surprised';target.x=clamp(target.x+(target.x>=bot.x?7:-7),14,W-14);await sleep(220);bot.busy=false;bot.pose='idle';target.mood='ok';return `Cartoon ${fn}: POW! No damage, just a playful pixel effect.`;
+    }
+    const poses={high_five:'high_five',handshake:'handshake',hug:'hug',fist_bump:'fist_bump',pat:'pat',comfort:'hug'};const pose=poses[fn]||'wave';
+    await Promise.all([faceTarget(bot,target),faceTarget(target,bot)]);
+    if(distance(bot,target)>34){const midX=(bot.x+target.x)/2,midY=(bot.y+target.y)/2;await Promise.all([walkTo(bot,midX-12,midY,330),walkTo(target,midX+12,midY,330)]);}
+    await Promise.all([animatePose(bot,pose,650,'happy'),animatePose(target,pose,650,'happy')]);puff((bot.x+target.x)/2,(bot.y+target.y)/2,'#e5f6ad');return `${fn.replaceAll('_',' ')} with ${target.name}.`;
+  }
+  async function doObjects(fn,bot,args){
+    const targetName=String(args.item||args.object||args.name||'');let item=bot.held?getItemById(bot.held):null;
+    if(fn==='pick_up'||fn==='fetch'||fn==='collect'||fn==='carry'){
+      if(item)return `Already holding ${item.name}.`;
+      item=closestItem(bot,targetName);if(!item)return 'I cannot find that loose object.';
+      if(distance(bot,item)>19)await walkTo(bot,item.x-12,item.y,340);item.heldBy=bot.id;bot.held=item.id;bot.pose='pick';await sleep(250);bot.pose='idle';return `Picked up ${item.name}.`;
+    }
+    if(fn==='catch'){const partner=otherBot(bot.id),found=state.items.find(i=>i.heldBy===partner.id);if(found){found.heldBy=bot.id;partner.held=null;bot.held=found.id;return `Caught ${found.name}!`;}await animatePose(bot,'wave',300);return 'Ready to catch — ask the other robot to pass an item.';}
+    if(['throw','toss','toss_to','pass_to'].includes(fn)){
+      if(!item){item=closestItem(bot,targetName);if(item){if(distance(bot,item)>16)await walkTo(bot,item.x-10,item.y,300);item.heldBy=bot.id;bot.held=item.id;}else return 'Pick up an object first, or name an object that is nearby.';}
+      const target=args.target==='A'?state.robots.A:args.target==='B'?state.robots.B:otherBot(bot.id);const isPass=fn==='pass_to'||fn==='toss_to';const from={x:bot.x+9,y:bot.y-3};let tx=target.x+(bot.x<target.x?-11:11),ty=target.y;
+      item.heldBy=null;bot.held=null;item.x=from.x;item.y=from.y-7;puff(from.x,from.y,'#dff3a5');await tweenItem(item,tx,ty-4,450);await sleep(100);
+      if(isPass){item.heldBy=target.id;target.held=item.id;return `Passed ${item.name} to ${target.name}.`;}
+      item.x=clamp(tx,15,W-15);item.y=clamp(ty+8,32,H-18);puff(item.x,item.y,'#dff3a5');return `Tossed ${item.name} toward ${target.name}; it landed safely nearby.`;
+    }
+    if(fn==='drop'||fn==='place'||fn==='unstack'){if(!item)return 'I am not holding anything.';item.heldBy=null;item.x=clamp(bot.x+Math.cos(bot.dir*Math.PI/180)*13,14,W-14);item.y=clamp(bot.y+Math.sin(bot.dir*Math.PI/180)*13+8,28,H-14);bot.held=null;return `Placed ${item.name} on the floor.`;}
+    if(fn==='push'||fn==='pull'||fn==='roll'||fn==='slide'||fn==='rotate_object'||fn==='flip'||fn==='stack'){
+      item=item||closestItem(bot,targetName);if(!item)return 'No suitable loose object is nearby.';const d=Number(args.distance)||18;const dir=fn==='pull'?-1:1;await tweenItem(item,clamp(item.x+dir*d,item.x>160?15:15,W-15),clamp(item.y+(fn==='flip'?-6:2),32,H-18),350);if(fn==='rotate_object')item.type=item.type==='plank'?'crate':item.type;return `${fn.replaceAll('_',' ')}: ${item.name}.`;
+    }
+    if(fn==='sort_objects'||fn==='line_up_objects'||fn==='arrange'||fn==='clean_up'){
+      const loose=state.items.filter(i=>i.visible&&!i.heldBy);for(let i=0;i<loose.length;i++){const destX=fn==='clean_up'?46+i*17:116+i*24;await tweenItem(loose[i],destX,fn==='sort_objects'?155:177,180);}return `${loose.length} objects ${fn.replaceAll('_',' ')}.`;
+    }
+    if(fn==='hide'||fn==='reveal'){item=closestItem(bot,targetName)||state.items.find(i=>!i.visible);if(item)item.visible=fn==='reveal';return item?`${item.name} ${fn==='hide'?'hidden':'revealed'}.`:'No object to change.';}
+    if(fn==='count_objects')return `${state.items.filter(i=>i.visible).length} objects visible.`;
+    if(fn==='deliver'){if(!item)return 'Pick up an object before delivering it.';const target=otherBot(bot.id);await walkTo(bot,target.x-18,target.y+8,400);item.heldBy=target.id;target.held=item.id;bot.held=null;return `Delivered ${item.name} to ${target.name}.`;}
+    if(fn==='assemble'||fn==='connect'||fn==='detach'||fn==='balance')return await doBuild(fn,bot,args);
+    if(fn==='stack'||fn==='unstack')return 'Object arrangement complete.';
+    return `${fn.replaceAll('_',' ')} complete.`;
+  }
+  async function doBuild(fn,bot,args){
+    if(fn==='demolish'){const s=state.structures.filter(s=>!s.hidden).sort((a,b)=>distance(bot,a)-distance(bot,b))[0];if(!s)return 'Nothing to demolish.';state.structures=state.structures.filter(v=>v!==s);state.blocksBuilt=Math.max(0,state.blocksBuilt-s.blocks.length);puff(s.cx,s.cy);return `Removed ${s.shape}.`;}
+    if(fn==='repair'||fn==='assemble'||fn==='connect'||fn==='balance'){
+      const s=state.structures.filter(s=>!s.hidden).sort((a,b)=>distance(bot,a)-distance(bot,b))[0];if(s){if(fn==='repair'){s.blocks.push(...makeBlocks(s.shape,s.cx,s.cy,1).slice(0,2));state.blocksBuilt+=2;}return `${fn} complete for ${s.shape}.`;}return 'No structure nearby; try a build command.';
+    }
+    if(fn==='detach'){const s=state.structures.filter(s=>!s.hidden).pop();if(!s)return 'No structure to detach.';s.blocks=s.blocks.slice(0,Math.ceil(s.blocks.length/2));return 'Detached part of the latest structure.';}
+    if(fn==='decorate'||fn==='paint'){const s=state.structures.filter(s=>!s.hidden).sort((a,b)=>distance(bot,a)-distance(bot,b))[0];if(!s)return 'Build something first, then decorate it.';const palette=['#306230','#426b20','#597b27','#74932c','#8bac0f'];s.color=palette[(palette.indexOf(s.color)+1+palette.length)%palette.length];s.blocks.forEach((b,i)=>{if(i%3===0)b.color=s.color;});return `Decorated the ${s.shape}.`;}
+    let shape=fn.startsWith('build_')?fn.slice(6):String(args.shape||'pyramid');if(fn==='build_shape')shape=args.shape||'pyramid';if(fn==='build_robot')shape='robot';if(fn==='build_cube')shape='cube';
+    return await buildShape(bot,shape,args);
+  }
+  async function doLogic(fn,bot,args){
+    if(fn==='report_status')return `${bot.name}: x=${Math.round(bot.x)}, y=${Math.round(bot.y)}, mood=${bot.mood}, holding=${bot.held?getItemById(bot.held)?.name:'nothing'}.`;
+    if(fn==='report_inventory')return `${bot.name} holds ${bot.held?getItemById(bot.held)?.name:'nothing'}. Visible objects: ${state.items.filter(i=>i.visible).map(i=>i.name).join(', ')||'none'}.`;
+    if(fn==='explain_plan')return 'Plan: each validated action runs against the local sandbox; condition commands choose a true/false branch before execution.';
+    if(fn==='ask_partner'){const p=otherBot(bot.id);await animatePose(p,'think',400);return `${p.name} is ready for a task.`;}
+    if(fn==='wait_for_partner'){let n=0;while(otherBot(bot.id).busy&&n++<10)await sleep(120);return 'Partner is ready.';}
+    if(fn==='random_action'){const pool=['wave','dance','jump','spin','cheer'];return await doExpress(pool[Math.floor(Math.random()*pool.length)],bot,{});}
+    if(fn==='choose_action'){const f=String(args.fn||'wave');if(CATALOG_BY_NAME[f])return await executeAction({bot:bot.id,fn:f,args:args.args||{}},1);return 'Choose one function from the command catalog.';}
+    if(fn==='compare_distance')return `Distance to ${otherBot(bot.id).name}: ${Math.round(distance(bot,otherBot(bot.id)))} pixels.`;
+    return 'Logic command complete.';
+  }
+
+  // Local prompt planner: useful offline, with conditions and command chaining for common phrasing.
+  const SHAPES=['pyramid','wall','tower','stairs','bridge','house','circle','square','triangle','rectangle','hexagon','diamond','heart','star','cross','arch','fence','spiral','zigzag','line','cube','ring','dome','robot'];
+  const ACTION_PATTERNS=[
+    [/\b(build|make|construct)\b[^.\n]*(pyramid|wall|tower|stairs|bridge|house|circle|square|triangle|rectangle|hexagon|diamond|heart|star|cross|arch|fence|spiral|zigzag|line|cube|ring|dome|robot)/i,(m)=>({fn:'build_'+m[2].toLowerCase(),args:{}})],
+    [/\b(pick up|picks up|picking up|grab|grabs|fetch|fetches|collect|collects|take|takes|get|gets)\b(?=[^.\n]{0,80}\b(cube|ball|star|plank|block|object|item|it|something|anything)\b)/i,(m,s)=>({fn:'pick_up',args:{item:(s.match(/\b(cube|ball|star|plank|block|object|item)\b/i)||[])[1]||''}})],
+    [/\b(throw|toss|launch|hurl|lob)\b/i,(m,s)=>({fn:'throw',args:{target:'partner',item:(s.match(/\b(cube|ball|star|plank|block)\b/i)||[])[1]||''}})],
+    [/\b(pass)\b/i,()=>({fn:'pass_to',args:{target:'partner'}})],
+    [/\b(drop|put down|place down)\b/i,()=>({fn:'drop',args:{}})],
+    [/\b(hug|embrace)\b/i,()=>({fn:'hug',args:{target:'partner'}})],
+    [/\b(high.?five)\b/i,()=>({fn:'high_five',args:{target:'partner'}})],
+    [/\b(handshake|shake hands)\b/i,()=>({fn:'handshake',args:{target:'partner'}})],
+    [/\b(fist.?bump)\b/i,()=>({fn:'fist_bump',args:{target:'partner'}})],
+    [/\b(punch|hit)\b/i,()=>({fn:'punch',args:{target:'partner'}})],
+    [/\b(kick)\b/i,()=>({fn:'kick',args:{target:'partner'}})],
+    [/\b(dance|boogie)\b/i,()=>({fn:'dance',args:{}})],
+    [/\b(wave|say hello|greet)\b/i,()=>({fn:'wave',args:{}})],
+    [/\b(jump|hop)\b/i,()=>({fn:'jump',args:{}})],
+    [/\b(spin)\b/i,()=>({fn:'spin',args:{}})],
+    [/\b(celebrate|cheer)\b/i,()=>({fn:'cheer',args:{}})],
+    [/\b(salute)\b/i,()=>({fn:'salute',args:{}})],
+    [/\b(turn left)\b/i,()=>({fn:'turn_left',args:{}})],
+    [/\b(turn right)\b/i,()=>({fn:'turn_right',args:{}})],
+    [/\b(turn around|face backwards)\b/i,()=>({fn:'turn_around',args:{}})],
+    [/\b(move|walk|run|go|step)\b/i,(m,s)=>({fn:/\brun\b/i.test(s)?'run':'move',args:{direction:/\bleft\b/i.test(s)?'left':/\bright\b/i.test(s)?'right':/\bback(ward)?\b/i.test(s)?'backward':/\b(north|up)\b/i.test(s)?'north':/\b(south|down)\b/i.test(s)?'south':'forward',distance:(Number((s.match(/\b(\d{1,3})\s*(?:px|pixels|steps)?\b/i)||[])[1])||28)}})],
+    [/\b(approach|go near|come closer|come to)\b/i,()=>({fn:'approach',args:{target:'partner'}})],
+    [/\b(retreat|back away|move away)\b/i,()=>({fn:'retreat',args:{}})],
+    [/\b(follow)\b/i,()=>({fn:'follow',args:{target:'partner'}})],
+    [/\b(orbit|circle around)\b/i,()=>({fn:'orbit',args:{target:'partner'}})],
+    [/\b(return home|go home)\b/i,()=>({fn:'return_home',args:{}})],
+    [/\b(patrol|wander)\b/i,()=>({fn:'patrol',args:{}})],
+    [/\b(sleep)\b/i,()=>({fn:'sleep',args:{}})],
+    [/\b(wake)\b/i,()=>({fn:'wake',args:{}})],
+    [/\b(count objects|count items)\b/i,()=>({fn:'count_objects',args:{}})],
+    [/\b(report|status|where are you)\b/i,()=>({fn:'report_status',args:{}})],
+    [/\b(inventory|what are you holding)\b/i,()=>({fn:'report_inventory',args:{}})],
+    [/\b(demolish|remove the build|destroy the structure)\b/i,()=>({fn:'demolish',args:{}})],
+    [/\b(sort|line up|arrange|clean up)\b/i,(m,s)=>({fn:/\bsort\b/i.test(s)?'sort_objects':/\bline up\b/i.test(s)?'line_up_objects':/\bclean up\b/i.test(s)?'clean_up':'arrange',args:{}})],
+    [/\b(push|pull|roll|slide)\b/i,(m,s)=>({fn:/\bpull\b/i.test(s)?'pull':/\broll\b/i.test(s)?'roll':/\bslide\b/i.test(s)?'slide':'push',args:{item:(s.match(/(?:the )?(cube|ball|star|plank|block)/i)||[])[1]||''}})],
+    [/\b(look at|scan|inspect|point at)\b/i,(m,s)=>({fn:/\binspect\b/i.test(s)?'inspect':/\bscan\b/i.test(s)?'scan':/\bpoint at\b/i.test(s)?'point':'look_at',args:{}})],
+    [/\b(clap|laugh|think|bow|nod|shrug|flex|blink|beep|whistle)\b/i,(m,s)=>({fn:s.match(/\b(clap|laugh|think|bow|nod|shrug|flex|blink|beep|whistle)\b/i)[1].toLowerCase(),args:{}})]
+  ];
+  function detectBotTarget(text,mainBot){const matches=[...text.matchAll(/\b(?:bot|robot)\s*(?:0?([12])|([ab]))\b/ig)];if(matches.length){const m=matches[matches.length-1];return (m[1]==='2'||String(m[2]||'').toUpperCase()==='B')?'B':'A';}if(/\bpartner|other robot|each other|one another|both of you|together\b/i.test(text))return 'partner';return null;}
+  function parseAtomic(text,botId){
+    const s=text.trim();
+    for(const [re,make] of ACTION_PATTERNS){const m=s.match(re);if(m){const a=make(m,s);if(a.args&&a.args.target==='partner')a.args.target=otherBot(botId).id;
+      const target=detectBotTarget(s,botId);if(target&&target!=='partner'&&(/\bhug|high.?five|handshake|fist.?bump|punch|kick|spar|tag|pass|throw|toss\b/i.test(s)))a.args.target=target;
+      return {...a,bot:botId};}}
+
+    // Expanded offline vocabulary. These aliases intentionally resolve to existing catalog
+    // functions, so the simulator stays self-contained and never invents unsupported actions.
+    const item=(s.match(/\b(cube|ball|star|plank|block|object|item)\b/i)||[])[1]||'';
+    const number=(s.match(/\b(\d{1,3})\b/)||[])[1];
+    const aliases=[
+      [/\b(create|design|draw|form|shape|assemble)\b[^.\n]*(pyramid|wall|tower|stairs|bridge|house|circle|square|triangle|rectangle|hexagon|diamond|heart|star|cross|arch|fence|spiral|zigzag|line|cube|ring|dome|robot)\b/i,(m)=>({fn:'build_'+m[2].toLowerCase(),args:{}})],
+      [/\b(catch|intercept)\b/i,()=>({fn:'catch',args:{}})],
+      [/\b(pass|hand|give|share)\b[^.\n]*(?:to|with)\b/i,()=>({fn:'pass_to',args:{target:otherBot(botId).id,item}})],
+      [/\b(carry|bring|deliver|take)\b[^.\n]*(?:to|over to|toward|towards)\s+(?:bot|robot|pico|byte|the other|your partner)/i,()=>({fn:'deliver',args:{item}})],
+      [/\b(carry|transport|bring|fetch|retrieve|collect)\b/i,()=>({fn:'carry',args:{item}})],
+      [/\b(put|place|set)\b[^.\n]*(?:down|on the floor|nearby|on top|next to)/i,()=>({fn:'place',args:{item}})],
+      [/\b(stack|pile|pile up)\b/i,()=>({fn:'stack',args:{item}})],
+      [/\b(unstack|unstick|separate)\b/i,()=>({fn:'unstack',args:{item}})],
+      [/\b(roll)\b/i,()=>({fn:'roll',args:{item}})],
+      [/\b(slide)\b/i,()=>({fn:'slide',args:{item}})],
+      [/\b(flip|turn over)\b/i,()=>({fn:'flip',args:{item}})],
+      [/\b(rotate|spin)\b[^.\n]*(?:object|cube|ball|plank|item)/i,()=>({fn:'rotate_object',args:{item}})],
+      [/\b(hide|conceal)\b/i,()=>({fn:'hide',args:{item}})],
+      [/\b(show|reveal|unhide)\b/i,()=>({fn:'reveal',args:{item}})],
+      [/\b(count)\b[^.\n]*(?:object|item|thing|block)/i,()=>({fn:'count_objects',args:{}})],
+      [/\b(sort)\b/i,()=>({fn:'sort_objects',args:{}})],
+      [/\b(line up|line them up|form a line)\b/i,()=>({fn:'line_up_objects',args:{}})],
+      [/\b(clean up|tidy up|organize|organise|arrange)\b/i,()=>({fn:'clean_up',args:{}})],
+      [/\b(approach|come closer|move closer|get closer|go near)\b/i,()=>({fn:'approach',args:{target:otherBot(botId).id}})],
+      [/\b(back away|retreat|keep away)\b/i,()=>({fn:'retreat',args:{}})],
+      [/\b(follow|chase)\b/i,()=>({fn:'follow',args:{target:otherBot(botId).id}})],
+      [/\b(orbit|circle around|go around)\b/i,()=>({fn:'orbit',args:{target:otherBot(botId).id}})],
+      [/\b(patrol|wander|roam)\b/i,()=>({fn:'patrol',args:{}})],
+      [/\b(go home|return home|go back to start)\b/i,()=>({fn:'return_home',args:{}})],
+      [/\b(stop|halt|pause|freeze|stay still)\b/i,()=>({fn:'stop',args:{}})],
+      [/\b(resume|unpause|continue moving|start again)\b/i,()=>({fn:'resume',args:{}})],
+      [/\b(wait|pause for)\b/i,()=>({fn:'wait',args:{ms:number?Number(number)*1000:500}})],
+      [/\b(repeat|again)\b/i,()=>({fn:'repeat',args:{times:number?Number(number):2,actions:[{bot:botId,fn:'wave',args:{}}]}})],
+      [/\b(compare distances?|how far apart)\b/i,()=>({fn:'compare_distance',args:{}})],
+      [/\b(explain (?:your )?plan|what is your plan)\b/i,()=>({fn:'explain_plan',args:{}})],
+      [/\b(inventory|what items? (?:are|do) you have|what are you holding)\b/i,()=>({fn:'report_inventory',args:{}})],
+      [/\b(status|report status|where are you|how are you doing)\b/i,()=>({fn:'report_status',args:{}})],
+      [/\b(ask|check with)\b[^.\n]*(partner|other robot|byte|pico)/i,()=>({fn:'ask_partner',args:{}})],
+      [/\b(wait for)\b[^.\n]*(partner|other robot|byte|pico)/i,()=>({fn:'wait_for_partner',args:{}})],
+      [/\b(team up|work together|cooperate|teamwork)\b/i,()=>({fn:'team_up',args:{target:otherBot(botId).id}})],
+      [/\b(sync|synchronize|synchronise|in sync)\b/i,()=>({fn:'sync_move',args:{target:otherBot(botId).id}})],
+      [/\b(mirror|copy the other robot|imitate)\b/i,()=>({fn:'mirror',args:{target:otherBot(botId).id}})],
+      [/\b(race|race each other)\b/i,()=>({fn:'race',args:{target:otherBot(botId).id}})],
+      [/\b(tag)\b/i,()=>({fn:'tag',args:{target:otherBot(botId).id}})],
+      [/\b(dodge|evade)\b/i,()=>({fn:'dodge',args:{target:otherBot(botId).id}})],
+      [/\b(block|shield|defend)\b/i,()=>({fn:'block',args:{target:otherBot(botId).id}})],
+      [/\b(spar|sparring|play fight|play-fight|fight playfully)\b/i,()=>({fn:'spar',args:{target:otherBot(botId).id}})],
+      [/\b(comfort|console)\b/i,()=>({fn:'comfort',args:{target:otherBot(botId).id}})],
+      [/\b(pat)\b/i,()=>({fn:'pat',args:{target:otherBot(botId).id}})],
+      [/\b(celebrate with)\b/i,()=>({fn:'celebrate_with',args:{target:otherBot(botId).id}})],
+      [/\b(smile|be happy)\b/i,()=>({fn:'cheer',args:{}})],
+      [/\b(look around|scan the area|inspect the area)\b/i,()=>({fn:'scan',args:{}})],
+      [/\b(point at|point to)\b/i,()=>({fn:'point',args:{}})],
+      [/\b(say|speak|talk)\b/i,()=>({fn:'say',args:{text:'Beep boop!'}})],
+      [/\b(ask a question|ask something)\b/i,()=>({fn:'ask',args:{}})]
+    ];
+    for(const [re,make] of aliases){const m=s.match(re);if(m){const a=make(m,s);if(a.args&&a.args.target==='partner')a.args.target=otherBot(botId).id;return {...a,bot:botId};}}
+
+    // Let users type catalog names as natural phrases, e.g. “move backward” or “if near”.
+    const plain=s.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    for(const spec of CATALOG.slice().sort((a,b)=>b.name.length-a.name.length)){
+      const phrase=spec.name.replace(/_/g,' ');
+      if(!new RegExp('\\b'+phrase.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i').test(plain))continue;
+      if(spec.core==='build'&&!/\b(build|make|construct|create|design|draw|form|shape)\b/i.test(s))continue;
+      return {bot:botId,fn:spec.name,args:{}};
+    }
+    if(/\b(throw|toss|hurl|lob|launch)\b/i.test(s))return {bot:botId,fn:'throw',args:{target:otherBot(botId).id,item}};
+    return null;
+  }
+  function localPlan(prompt,botId){
+    const text=prompt.trim();if(!text)return {reply:'Give me a task to try!',actions:[]};
+    // Support a compact build list such as “make a wall, tower, and stairs”.
+    if(/\b(build|make|construct)\b/i.test(text)){
+      const found=SHAPES.filter(shape=>new RegExp('\\b'+shape+'\\b','i').test(text));
+      if(found.length>1)return {reply:`Build queue: ${found.join(', ')}.`,actions:found.map(shape=>({bot:botId,fn:'build_'+shape,args:{}}))};
+    }
+    // Branches are represented as executable condition commands, not simply text instructions.
+    if(/^if\b/i.test(text)&&/\bthen\b/i.test(text)){
+      const pieces=text.match(/^if\s+(.+?)\s+then\s+(.+?)(?:\s+(?:otherwise|else)\s+(.+))?$/i);
+      if(pieces){const cond=pieces[1],thenText=pieces[2],elseText=pieces[3]||'';let cfn=/holding|picked up|carrying/i.test(cond)?'if_holding':/far|far away/i.test(cond)?'if_far':/clear|no objects/i.test(cond)?'if_clear':/blocked|too close/i.test(cond)?'if_blocked':/partner.*idle|partner.*free/i.test(cond)?'if_partner_idle':/partner.*wave|waving/i.test(cond)?'if_partner_wave':/object|item.*count|at least/i.test(cond)?'if_item_count':'if_near';const condArgs={target:otherBot(botId).id,distance:(Number((cond.match(/(\d+)\s*(?:px|pixels|steps|units)\b/i)||[])[1])||48),item:(cond.match(/cube|ball|star|plank/i)||[])[0]||''};if(cfn==='if_holding'&&!condArgs.item)condArgs.item='';if(cfn==='if_item_count')condArgs.count=Number((cond.match(/\d+/)||[])[0])||1;const thenAct=parseAtomic(thenText,botId),elseAct=parseAtomic(elseText,botId);return {reply:`I interpreted that as an ${cfn.replaceAll('_',' ')} condition with ${elseAct?'IF and ELSE':'IF'} branch${elseAct?'es':''}.`,actions:[{bot:botId,fn:cfn,args:{...condArgs,then:thenAct?[thenAct]:[],else:elseAct?[elseAct]:[]}}]};}
+    }
+    // Repeat one supported action when the count is stated explicitly.
+    const repeatMatch=text.match(/^(?:please\s+)?(?:repeat|do|perform)\s+(.+?)\s+(?:for\s+)?(\d+)\s+times?$/i)||text.match(/^(?:please\s+)?(.+?)\s+(\d+)\s+times?$/i);
+    if(repeatMatch){const repeated=parseAtomic(repeatMatch[1],botId);if(repeated){const times=Math.max(1,Math.min(6,Number(repeatMatch[2])||1));return {reply:`Repeating ${repeatMatch[1]} ${times} time${times===1?'':'s'}.`,actions:[{bot:repeated.bot||botId,fn:'repeat',args:{times,actions:[repeated]}}]};}}
+    // Separate obvious chains while preserving phrases like "each other" and shape names.
+    const chunks=text.split(/\s*(?:,\s*then\s+|\bthen\s+|\bafter that\b|\bafterwards\b|\bnext\s+|;|\band then\b)\s*/i).filter(Boolean);
+    const actions=[];
+    for(let chunk of chunks){chunk=chunk.replace(/^(?:and\s+)/i,'');
+      const collectivePattern=/\b(both robots?|both bots?|both of you|you both|each other|one another|together|all robots?|the robots|both pico and byte|pico and byte)\b/i;
+      const asksBoth=collectivePattern.test(chunk);
+      const cleaned=chunk.replace(/\b(both robots?|both bots?|both of you|you both|each other|one another|together|all robots?|the robots|both pico and byte|pico and byte)\b/ig,'').replace(/\b(?:please|can you|could you|would you|will you|hey|robot|robots)\b/ig,' ').replace(/\s+/g,' ').trim()||chunk;
+      // Split two plain actions joined by "and" (but not a shape or object phrase).
+      let subchunks=[cleaned];if(/\band\b/i.test(cleaned)&&/\b(dance|wave|jump|spin|hug|high.?five|pyramid|circle|square|tower|wall|stairs|salute|cheer|punch|kick)\b/i.test(cleaned)){subchunks=cleaned.split(/\s+and\s+(?=(?:then\s+)?(?:dance|wave|jump|spin|hug|high.?five|build|make|construct|salute|cheer|punch|kick|move|walk|run|turn|pick|grab|throw|toss|drop)\b)/i);}
+      for(const sub of subchunks){const action=parseAtomic(sub,botId);if(action){if(asksBoth){action.bot='both';if(action.args&&['hug','high_five','handshake','fist_bump','pat','comfort','celebrate_with','punch','kick','spar','tag','team_up','sync_move','mirror','race','throw','toss','toss_to','pass_to'].includes(action.fn))action.args.target=otherBot(botId).id;}else{const actorMatch=sub.match(/^\s*(?:(?:make|tell|ask|command|have|let)\s+)?(?:bot|robot)\s*(?:0?([12])|([ab]))\b/i);if(actorMatch)action.bot=(actorMatch[1]==='2'||String(actorMatch[2]||'').toUpperCase()==='B')?'B':'A';}actions.push(action);}}
+    }
+    // Gentle fallback for two-part object commands that the split might not preserve.
+    if(/\b(pick up|grab)\b/i.test(text)&&/\b(throw|toss)\b/i.test(text)&&!actions.some(a=>a.fn==='throw')){actions.splice(0,actions.length,{bot:botId,fn:'pick_up',args:{item:(text.match(/\b(cube|ball|star|plank|block)\b/i)||[])[1]||''}},{bot:botId,fn:'throw',args:{target:otherBot(botId).id}});}
+    if(/\b(both|each other|together)\b/i.test(text)&&/\bhug\b/i.test(text)&&!actions.some(a=>a.fn==='hug'))actions.push({bot:botId,fn:'hug',args:{target:otherBot(botId).id}});
+    if(!actions.length){
+      if(/\bhelp|what can you do|commands|functions\b/i.test(text))return {reply:`I have ${CATALOG.length} registered actions. Open COMMAND CATALOG to browse them, or try “build a pyramid”, “pick up the cube”, “hug each other”, or “if Bot 02 is near then wave”.`,actions:[]};
+      return {reply:'I could not confidently map that prompt in offline mode. Open API SETUP for AI planning, or try a sample prompt from the stage.',actions:[]};
+    }
+    return {reply:`Got it — ${actions.length} action${actions.length===1?'':'s'} queued using the local planner.`,actions};
+  }
+
+  function currentWorldSummary(){return {robots:Object.values(state.robots).map(b=>({id:b.id,name:b.name,x:Math.round(b.x),y:Math.round(b.y),facing:Math.round(b.dir),holding:b.held?getItemById(b.held)?.name:null,busy:b.busy,mood:b.mood})),objects:state.items.filter(i=>i.visible).map(i=>({name:i.name,x:Math.round(i.x),y:Math.round(i.y),heldBy:i.heldBy})),builds:state.structures.filter(s=>!s.hidden).map(s=>({shape:s.shape,blocks:s.blocks.length,cx:Math.round(s.cx),cy:Math.round(s.cy)}))};}
+  function systemPrompt(botId){
+    const names=CATALOG.map(c=>c.name).join(', ');
+    return `You are ${state.robots[botId].name}, a friendly retro pixel robot in a 2D sandbox. Convert a user's instruction into a safe, executable action plan. The scene is a small toy simulation. Cartoon robot sparring is non-graphic and harmless; do not describe injury. Only use registered function names from this list: ${names}.
+Return ONLY valid JSON with this exact shape: {"reply":"one short friendly sentence","actions":[{"bot":"A|B|both","fn":"registered_name","args":{}}]}. Never return code fences or anything outside JSON. Commands run in sequence unless the user explicitly requests parallel behavior. Use "both" to command both robots. Use target "A" or "B" to address a specific robot.
+Conditional action example: {"bot":"A","fn":"if_near","args":{"target":"B","distance":48,"then":[{"bot":"A","fn":"hug","args":{"target":"B"}}],"else":[{"bot":"A","fn":"wave","args":{}}]}}. Other condition commands: if_far, if_holding (optional item), if_clear, if_blocked, if_partner_idle, if_partner_wave, if_item_count. Repeat format: {"fn":"repeat","bot":"A","args":{"times":3,"actions":[{"fn":"wave","bot":"A","args":{}}]}}. Sequence / parallel accept args.actions arrays. For builds use the specific function like build_pyramid, build_circle, build_house or build_shape with args.shape. Object arguments can use args.item (cube, ball, star, plank) and args.target. For throw/toss commands, target the other robot by default; the object lands safely nearby. If the request is ambiguous, choose a simple safe interpretation and say what you assumed. Do not invent unregistered functions. Keep each response compact.
+CURRENT WORLD STATE: ${JSON.stringify(currentWorldSummary())}`;
+  }
+  function extractJson(text){let s=String(text||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');try{return JSON.parse(s);}catch{}const start=s.indexOf('{'),end=s.lastIndexOf('}');if(start>=0&&end>start){try{return JSON.parse(s.slice(start,end+1));}catch{}}return null;}
+  async function callPlanner(prompt,botId){
+    const api=state.api;if(!api.enabled||!api.key)return localPlan(prompt,botId);
+    const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),api.timeout*1000);
+    try{
+      const messages=[{role:'system',content:systemPrompt(botId)},...state.logs[botId].filter(m=>['user','assistant'].includes(m.role)).slice(-8),{role:'user',content:prompt}];
+      const response=await fetch(api.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+api.key},body:JSON.stringify({model:api.model,messages,temperature:api.temperature,max_tokens:1400}),signal:controller.signal});
+      const raw=await response.text();if(!response.ok)throw new Error(`API ${response.status}: ${raw.slice(0,240)}`);
+      let envelope;try{envelope=JSON.parse(raw);}catch{throw new Error('The API response was not JSON.');}
+      const content=envelope?.choices?.[0]?.message?.content;if(!content)throw new Error('No assistant content found. Check that this is a compatible chat-completions endpoint.');
+      const plan=extractJson(content);if(!plan||!Array.isArray(plan.actions))throw new Error('AI response did not contain the required {reply, actions} JSON.');
+      plan.actions=plan.actions.filter(a=>a&&CATALOG_BY_NAME[String(a.fn||'').toLowerCase().replace(/[ -]/g,'_')]);
+      return {reply:String(plan.reply||'Plan ready.').slice(0,500),actions:plan.actions,source:'api'};
+    }catch(err){
+      const fallback=localPlan(prompt,botId);fallback.reply=`API unavailable (${err.name==='AbortError'?'timeout':err.message}). ${fallback.reply}`;fallback.source='fallback';return fallback;
+    }finally{clearTimeout(timer);}
+  }
+  async function handlePrompt(botId,prompt){
+    window.__lastPrompt=prompt;
+    appendMessage(botId,'user',prompt);const removeTyping=appendTyping(botId);
+    $('engineState').textContent='THINKING';
+    const plan=await callPlanner(prompt,botId);removeTyping();appendMessage(botId,'robot',plan.reply+(plan.source==='api'?' [AI planner]':plan.source==='fallback'?' [local fallback]':''));
+    if(!plan.actions.length){setStatus('idle',false);return;}
+    state.busyCount++;state.robots[botId].busy=true;setStatus('executing',true);
+    try{for(const action of plan.actions){await executeAction(action);} }
+    catch(err){appendMessage(botId,'system','Action stopped: '+err.message);}
+    finally{state.robots[botId].busy=false;state.busyCount=Math.max(0,state.busyCount-1);setStatus('ready',false);}
+  }
+
+  // Provider presets use a common chat-completions request shape. Model IDs can change over time.
+  const PRESETS={
+    demo:{endpoint:'',model:'',provider:'demo'},
+    openrouter:{endpoint:'https://openrouter.ai/api/v1/chat/completions',model:'openrouter/free',provider:'openrouter'},
+    gemini:{endpoint:'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',model:'gemini-3.8-flash',provider:'gemini'},
+    groq:{endpoint:'https://api.groq.com/openai/v1/chat/completions',model:'openai/gpt-oss-20b',provider:'groq'},
+    custom:{endpoint:'',model:'',provider:'custom'}
+  };
+  function loadSettings(){try{const saved=JSON.parse(localStorage.getItem('robolab.settings')||'null');if(saved&&typeof saved==='object'){const p=PRESETS[saved.provider]||PRESETS.openrouter;state.api.provider=saved.provider||'openrouter';state.api.endpoint=saved.endpoint??p.endpoint;state.api.model=saved.model??p.model;state.api.temperature=Number(saved.temperature??.2);state.api.timeout=Number(saved.timeout??35);state.api.remember=true;$('rememberSettings').checked=true;}}catch{}}
+  function syncSettingsToUI(){const a=state.api;$('providerPreset').value=a.provider;$('endpointInput').value=a.endpoint;$('modelInput').value=a.model;$('temperatureInput').value=a.temperature;$('timeoutInput').value=a.timeout;$('rememberSettings').checked=!!a.remember;$('keyInput').value=a.key||'';syncModeBadge();}
+  function syncModeBadge(){const enabled=!!state.api.enabled;$('modeLabel').textContent=enabled?`AI PLANNER · ${state.api.provider.toUpperCase()}`:'LOCAL DEMO MODE';$('modeLed').style.background=enabled?'#d5f26e':'#9bbc0f';}
+  function applySettings(){const provider=$('providerPreset').value;state.api.provider=provider;state.api.endpoint=$('endpointInput').value.trim();state.api.model=$('modelInput').value.trim();state.api.key=$('keyInput').value.trim();state.api.temperature=clamp(Number($('temperatureInput').value)||.2,0,1.5);state.api.timeout=clamp(Number($('timeoutInput').value)||35,5,120);state.api.remember=$('rememberSettings').checked;state.api.enabled=provider!=='demo'&&!!state.api.endpoint&&!!state.api.model&&!!state.api.key;
+    if(state.api.remember){try{localStorage.setItem('robolab.settings',JSON.stringify({provider:state.api.provider,endpoint:state.api.endpoint,model:state.api.model,temperature:state.api.temperature,timeout:state.api.timeout}));}catch{}}
+    else{try{localStorage.removeItem('robolab.settings');}catch{}}
+    syncModeBadge();$('apiStatus').className='api-status';$('apiStatus').textContent=state.api.enabled?'AI planning is enabled. The API key is stored only in this page’s current JavaScript memory. If requests fail, check provider settings and CORS support.':provider==='demo'?'Offline demo is ready. Choose a provider and enter your own API key to enable AI planning.':'Settings applied, but AI mode is off until a non-demo provider, endpoint, model ID, and API key are present.';
+  }
+  async function testApi(){applySettings();if(!state.api.enabled){$('apiStatus').textContent='Choose a provider, set an endpoint/model, and enter an API key before testing.';return;}const btn=$('testApiBtn');btn.disabled=true;btn.textContent='TESTING…';$('apiStatus').className='api-status';$('apiStatus').textContent='Sending a tiny test request…';try{const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),Math.min(15000,state.api.timeout*1000));const res=await fetch(state.api.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.api.key},body:JSON.stringify({model:state.api.model,messages:[{role:'system',content:'Return valid JSON only.'},{role:'user',content:'Return exactly {"reply":"API ready","actions":[]}'}],temperature:0,max_tokens:40}),signal:ctrl.signal});clearTimeout(timer);const body=await res.text();if(!res.ok)throw new Error(`HTTP ${res.status}: ${body.slice(0,220)}`);let j=JSON.parse(body);if(!j?.choices?.[0]?.message?.content)throw new Error('No choices[0].message.content found in response.');$('apiStatus').textContent='Connection looks good. The endpoint returned a chat completion. Click APPLY SETTINGS to keep these settings in the current page.';state.api.enabled=true;syncModeBadge();}catch(e){$('apiStatus').className='api-status error';$('apiStatus').textContent='Could not test the endpoint: '+(e.name==='AbortError'?'request timed out':e.message)+' Browser CORS rules or provider-specific formats may prevent direct calls from a static page.';}finally{btn.disabled=false;btn.textContent='TEST API ↗';}}
+
+  function openOverlay(id){$(id).classList.add('open');}function closeOverlay(id){$(id).classList.remove('open');}
+  function renderCatalog(){const q=$('catalogSearch').value.toLowerCase().trim(),cat=$('catalogCategory').value;const results=CATALOG.filter(c=>(cat==='all'||c.category===cat)&&(!q||c.name.includes(q)||c.description.toLowerCase().includes(q)||c.category.toLowerCase().includes(q)));$('catalogList').innerHTML='';for(const c of results){const div=document.createElement('div');div.className='catalog-item';const strong=document.createElement('strong');strong.textContent=c.name;const small=document.createElement('small');small.textContent=c.category+' · '+c.description;div.append(strong,small);$('catalogList').append(div);}if(!results.length){const empty=document.createElement('div');empty.className='notice';empty.textContent='No matching functions. Try a broader search.';$('catalogList').append(empty);}}
+  function resetWorld(){state.robots.A.x=68;state.robots.A.y=126;state.robots.A.dir=0;state.robots.A.held=null;state.robots.A.pose='idle';state.robots.A.mood='ok';state.robots.A.freeze=false;state.robots.B.x=252;state.robots.B.y=126;state.robots.B.dir=180;state.robots.B.held=null;state.robots.B.pose='idle';state.robots.B.mood='ok';state.robots.B.freeze=false;state.items=[{id:'cube',type:'crate',name:'cube',x:132,y:145,color:'#426b20',heldBy:null,visible:true},{id:'ball',type:'ball',name:'ball',x:177,y:147,color:'#0f380f',heldBy:null,visible:true},{id:'star',type:'star',name:'star',x:151,y:79,color:'#74932c',heldBy:null,visible:true},{id:'plank',type:'plank',name:'plank',x:201,y:153,color:'#597b27',heldBy:null,visible:true}];state.structures=[];state.sparks=[];state.floatingTexts=[];state.actionsRun=0;state.blocksBuilt=0;setStatus('sandbox_01',false);}
+  function clearChats(){for(const b of ['A','B']){$('log'+b).innerHTML='';state.logs[b]=[];appendMessage(b,'system','Chat cleared. The robot is ready for a new command.');}}
+
+  // UI hooks
+  $('formA').addEventListener('submit',async e=>{e.preventDefault();const v=$('inputA').value.trim();if(!v)return;$('inputA').value='';await handlePrompt('A',v);});
+  $('formB').addEventListener('submit',async e=>{e.preventDefault();const v=$('inputB').value.trim();if(!v)return;$('inputB').value='';await handlePrompt('B',v);});
+  for(const id of ['inputA','inputB'])$(id).addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$(id).closest('form').requestSubmit();}});
+  $('apiOpen').addEventListener('click',()=>openOverlay('apiOverlay'));$('catalogOpen').addEventListener('click',()=>{renderCatalog();openOverlay('catalogOverlay');});
+  document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeOverlay(btn.dataset.close)));
+  document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeOverlay(o.id);}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>closeOverlay(o.id));});
+  $('providerPreset').addEventListener('change',()=>{const v=$('providerPreset').value,p=PRESETS[v];if(p){$('endpointInput').value=p.endpoint;$('modelInput').value=p.model;$('apiStatus').textContent=v==='demo'?'Offline commands need no key.':'Preset loaded. Enter a key for this provider and verify the model ID in its current documentation.';}});
+  $('testApiBtn').addEventListener('click',testApi);$('saveApiBtn').addEventListener('click',()=>{applySettings();closeOverlay('apiOverlay');});$('demoApiBtn').addEventListener('click',()=>{$('providerPreset').value='demo';$('endpointInput').value='';$('modelInput').value='';$('keyInput').value='';applySettings();state.api.enabled=false;syncModeBadge();$('apiStatus').textContent='Offline mode active. No API key is required.';});
+  $('rememberSettings').addEventListener('change',()=>state.api.remember=$('rememberSettings').checked);
+  $('catalogSearch').addEventListener('input',renderCatalog);$('catalogCategory').addEventListener('change',renderCatalog);
+  $('resetBtn').addEventListener('click',()=>{resetWorld();addSystemBoth('World reset. Robots and four starter objects restored.');});
+  $('pauseBtn').addEventListener('click',()=>{state.paused=!state.paused;$('pauseBtn').textContent=state.paused?'▶ RESUME':'Ⅱ PAUSE';setStatus(state.paused?'paused':'ready',!state.paused);});
+  $('selectedBtn').addEventListener('click',()=>{state.selectedBot=state.selectedBot==='A'?'B':'A';$('selectedBtn').textContent='CONTROL: BOT '+(state.selectedBot==='A'?'01':'02');});
+  $('clearChatBtn').addEventListener('click',clearChats);
+  document.querySelectorAll('.prompt-chip').forEach(btn=>btn.addEventListener('click',()=>{const b=btn.dataset.bot,p=btn.dataset.prompt;$('input'+b).value=p;$('input'+b).focus();$('form'+b).requestSubmit();}));
+  canvas.addEventListener('click',e=>{const r=canvas.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;const bot=state.robots[state.selectedBot];if(state.busyCount)return;handlePrompt(bot.id,`Move to pixel coordinates x ${Math.round(x)} y ${Math.round(y)}.`);});
+
+  // Improve local click-to-move prompt parsing before the general pattern matcher.
+  const _localPlan=localPlan;
+  localPlan=function(prompt,botId){const m=prompt.match(/move to pixel coordinates x\s*(\d+)\s*y\s*(\d+)/i);if(m)return {reply:'Navigation point set from your screen click.',actions:[{bot:botId,fn:'go_to',args:{target:'point',x:Number(m[1]),y:Number(m[2]),distance:10}}]};return _localPlan(prompt,botId);};
+  const _doMove=doMove;
+  doMove=async function(fn,bot,args){if(fn==='go_to'&&Number.isFinite(Number(args.x))&&Number.isFinite(Number(args.y))){await walkTo(bot,Number(args.x),Number(args.y),500);return 'Moved to selected coordinates.';}return _doMove(fn,bot,args);};
+
+  // Catalogue filters and boot sequence.
+  for(const cat of CAT_NAMES){const o=document.createElement('option');o.value=cat;o.textContent=cat;$('catalogCategory').append(o);}
+  $('catalogCount').textContent=CATALOG.length;$('commandCount').textContent=CATALOG.length+'+';
+  loadSettings();syncSettingsToUI();
+  appendMessage('A','robot','Pico online. I understand common commands locally. Connect an API for flexible planning!');
+  appendMessage('A','system','TRY: “Build a pyramid”, “Pick up the cube then toss it toward Bot 02”, or “If Bot 02 is nearby then high-five otherwise wave.”');
+  appendMessage('B','robot','Byte online. Ready to build, move, coordinate, and play. Beep boop!');
+  appendMessage('B','system','Open COMMAND CATALOG to browse every registered function. Use API SETUP to bring your own compatible endpoint and key.');
+  if(CATALOG.length<100)console.warn('Catalog should contain 100+ commands; found',CATALOG.length);
+  drawWorld();
+})();
+</script>
+</body>
+</html>
